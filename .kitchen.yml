@@ -1,0 +1,28 @@
+---
+driver:
+  name: dokken
+  chef_version: 12.19.36
+  privileged: true
+
+transport:
+  name: dokken
+
+provisioner:
+  name: dokken
+
+verifier:
+  name: inspec
+
+platforms:
+- name: ubuntu-16.04
+  driver:
+    image: ubuntu:16.04
+    pid_one_command: /bin/systemd
+
+suites:
+  - name: logicmonitor
+    verifier:
+      inspec_tests:
+        - test/smoke/logicmonitor
+    run_list:
+      - recipe[logicmonitor::default]
