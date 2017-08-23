@@ -19,27 +19,35 @@
 provides :logicmonitor_device
 resource_name :logicmonitor_device
 
-property :host, String, name_property: true
+property :host, String, name_property: true, identity: true
 property :display_name, String
 property :description, String
 property :link, String
 property :disable_alerting, [true, false], default: false
-property :host_groups, Array, required: true
-property :preferred_collector, String, required: true
+property :host_groups, Array, required: true, desired_state: false
+property :preferred_collector, String, required: true, desired_state: false
 property :enable_netflow, [true, false], default: false
 property :netflow_collector, Integer
 property :custom_properties, Array
-property :account_name, String, required: true
-property :access_id, String, required: true
-property :access_key, String, required: true
+property :account_name, String, required: true, desired_state: false
+property :access_id, String, required: true, desired_state: false
+property :access_key, String, required: true, desired_state: false
+
+load_current_value do
+  current_value_does_not_exist! unless current_value('name')
+  display_name current_value('displayName')
+  description current_value('description')
+  link current_value('link')
+  disable_alerting current_value('disableAlerting')
+  enable_netflow current_value('enableNetflow')
+  netflow_collector current_value('netflowCollectorId')
+  custom_properties current_value('customProperties')
+end
 
 action :create do
-  lookup = client.get("/device/devices?filter=name:#{CGI.escape(new_resource.host)}")
-  if lookup && lookup['data']['total'] > 0
-    ::Chef::Log.info("#{resource_header} already exists, skipping")
-  else
-    ::Chef::Log.info("#{resource_header} does not exist, creating")
-    client.post('/device/devices', properties)
+  converge_by("creating logicmonitor device for #{new_resource.host}") do
+    response = client.post('/device/devices', properties)
+    ::Chef::Log.info("logicmonitor: created device for #{new_resource.host} (#{response['errmsg']})")
   end
 end
 
@@ -79,17 +87,17 @@ action_class do
     return @preferred_collector if @preferred_collector
     id = new_resource.preferred_collector
     if id == '0' || id.to_i != 0
-      @preferred_collector = id.to_i
+      id = id.to_i
     else
       begin
         lookup = client.get("/setting/collectors?filter=hostname~#{CGI.escape(id)}&sort=+numberOfHosts&fields=id")
-        @preferred_collector = lookup['data']['items'][0]['id']
+        id = lookup['data']['items'][0]['id']
       rescue StandardError => e
         ::Chef::Log.error("#{resource_header} could not find ID for preferred_collector: #{id}")
         raise e
       end
     end
-    @preferred_collector
+    @preferred_collector = id
   end
 
   def properties
@@ -113,5 +121,12 @@ action_class do
     end
 
     @properties = data
+  end
+
+  def current_value(field)
+    @current ||= client.get("/device/devices?filter=name:#{CGI.escape(new_resource.host)}")['data']['items'][0]
+    (@current[field] && !@current[field].empty? ? @current[field] : nil)
+  rescue
+    nil
   end
 end
