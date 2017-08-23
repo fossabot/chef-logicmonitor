@@ -17,6 +17,7 @@
 # limitations under the License.
 
 require 'base64'
+require 'cgi'
 require 'date'
 require 'json'
 require 'net/http'
