@@ -33,9 +33,9 @@ property :account_name, String, required: true, desired_state: false
 property :access_id, String, required: true, desired_state: false
 property :access_key, String, required: true, desired_state: false
 
-load_current_value do
-  client = Logicmonitor::Client.new(new_resource.account_name, new_resource.access_id, new_resource.access_key)
-  lookup = client.get("/device/devices?filter=name:#{CGI.escape(new_resource.host)}")
+load_current_value do |desired|
+  client = Logicmonitor::Client.new(desired.account_name, desired.access_id, desired.access_key)
+  lookup = client.get("/device/devices?filter=name:#{CGI.escape(desired.host)}")
   current_value_does_not_exist! unless lookup && lookup['data'] && lookup['data']['total'] > 0
   current = lookup['data']['items'][0]
   field = lambda { |field| (current[field] && !current[field].empty? ? current[field] : nil) }
