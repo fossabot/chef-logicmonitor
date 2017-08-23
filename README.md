@@ -19,7 +19,7 @@ Manage a device.
 - `description`: The device description.
 - `link`: The URL link associated with the device.
 - `disable_alerting`: Indicates whether alerting is disabled (`true`) or enabled (`false`) for this device. Default: `false`
-- `host_groups`: Required - the Id(s) of the groups the device is in as an array.
+- `host_groups`: Required - the Id(s) as string(s) or substring(s) of the groups the device is in as an array.
 - `preferred_collector`: Required - the Id as a string or a substring found in the hostname of the preferred collector(s) assigned to monitor the device. If more than one is found, the one with the fewest hosts is used.
 - `enable_netflow`: Indicates whether Netflow is enabled (`true`) or disabled (`false`) for the device. Default: `false`
 - `netflow_collector`: Required if `enable_netflow` is set - the Id of the netflow collector associated with the device.
@@ -32,7 +32,7 @@ Manage a device.
 
 ```ruby
 logicmonitor_device '10.36.11.240' do
-  host_groups [2, 34]
+  host_groups ['2', 'Servers/East']
   preferred_collector '85'
   account_name 'api'
   access_id node['api']['access_id']

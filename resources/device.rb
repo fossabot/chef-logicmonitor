@@ -56,6 +56,25 @@ action_class do
     @resource_header ||= "logicmonitor-device-#{new_resource.host}"
   end
 
+  def host_groups
+    return @host_groups if @host_groups
+    ids = []
+    new_resource.host_groups.each do |host_group|
+      if host_group == '0' || host_group.to_i != 0
+        ids << host_group
+      else
+        begin
+          lookup = client.get("/device/groups?filter=fullPath~#{CGI.escape(host_group)}&fields=id")
+          ids.concat(lookup['data']['items'].map { |i| i['id'] })
+        rescue StandardError => e
+          ::Chef::Log.fatal("#{resource_header} could not find ID for host_group: #{host_group}")
+          raise e
+        end
+      end
+    end
+    @host_groups = ids
+  end
+
   def preferred_collector
     return @preferred_collector if @preferred_collector
     id = new_resource.preferred_collector
