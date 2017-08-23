@@ -33,23 +33,11 @@ property :account_name, String, required: true, desired_state: false
 property :access_id, String, required: true, desired_state: false
 property :access_key, String, required: true, desired_state: false
 
-load_current_value do |desired|
-  client = Logicmonitor::Client.new(desired.account_name, desired.access_id, desired.access_key)
-  lookup = client.get("/device/devices?filter=name:#{CGI.escape(desired.host)}")
-  current_value_does_not_exist! unless lookup && lookup['data'] && lookup['data']['total'] > 0
-  current = lookup['data']['items'][0]
-  field = lambda { |field| (current[field] && !current[field].to_s.empty? ? current[field] : nil) }
-  display_name field['displayName']
-  description field['description']
-  link field['link']
-  disable_alerting field['disableAlerting']
-  enable_netflow field['enableNetflow']
-  netflow_collector field['netflowCollectorId']
-  custom_properties field['customProperties']
-end
-
 action :create do
-  converge_by("creating logicmonitor device for #{new_resource.host}") do
+  lookup = client.get("/device/devices?filter=name:#{CGI.escape(new_resource.host)}")
+  if lookup && lookup['data'] && lookup['data']['total'] > 0
+    ::Chef::Log.info("logicmonitor: device for #{new_resource.host} already exists, skipping")
+  else
     response = client.post('/device/devices', properties)
     if response['errmsg'] == 'OK'
       ::Chef::Log.info("logicmonitor: created device for #{new_resource.host}")
