@@ -34,14 +34,14 @@ property :access_id, String, required: true, desired_state: false
 property :access_key, String, required: true, desired_state: false
 
 load_current_value do
-  current_value_does_not_exist! unless current_value('name')
-  display_name current_value('displayName')
-  description current_value('description')
-  link current_value('link')
-  disable_alerting current_value('disableAlerting')
-  enable_netflow current_value('enableNetflow')
-  netflow_collector current_value('netflowCollectorId')
-  custom_properties current_value('customProperties')
+  current_value_does_not_exist! unless get_field('name')
+  display_name get_field('displayName')
+  description get_field('description')
+  link get_field('link')
+  disable_alerting get_field('disableAlerting')
+  enable_netflow get_field('enableNetflow')
+  netflow_collector get_field('netflowCollectorId')
+  custom_properties get_field('customProperties')
 end
 
 action :create do
@@ -123,7 +123,7 @@ action_class do
     @properties = data
   end
 
-  def current_value(field)
+  def get_field(field)
     @current ||= client.get("/device/devices?filter=name:#{CGI.escape(new_resource.host)}")['data']['items'][0]
     (@current[field] && !@current[field].empty? ? @current[field] : nil)
   rescue
