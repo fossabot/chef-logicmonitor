@@ -25,7 +25,7 @@ property :description, String
 property :link, String
 property :disable_alerting, [true, false], default: false
 property :host_groups, Array, required: true
-property :preferred_collector, Integer, required: true
+property :preferred_collector, String, required: true
 property :enable_netflow, [true, false], default: false
 property :netflow_collector, Integer
 property :custom_properties, Array
@@ -36,9 +36,9 @@ property :access_key, String, required: true
 action :create do
   lookup = client.get('/device/devices?filter=name:grasp-linadm1')
   if lookup && lookup['data']['total'] > 0
-    ::Chef::Log.info("logicmonitor-device-#{new_resource.host} already exists, skipping")
+    ::Chef::Log.info("#{resource_header} already exists, skipping")
   else
-    ::Chef::Log.info("logicmonitor-device-#{new_resource.host} does not exist, creating")
+    ::Chef::Log.info("#{resource_header} does not exist, creating")
     client.post('/device/devices', properties)
   end
 end
@@ -52,13 +52,34 @@ action_class do
     )
   end
 
+  def resource_header
+    @resource_header ||= "logicmonitor-device-#{new_resource.host}"
+  end
+
+  def preferred_collector
+    return @preferred_collector if @preferred_collector
+    id = new_resource.preferred_collector
+    if id == '0' || id.to_i != 0
+      @preferred_collector = id.to_i
+    else
+      begin
+        lookup = client.get("/setting/collectors?filter=hostname~#{id}&sort=+numberOfHosts")
+        @preferred_collector = lookup['data']['items'][0]['id']
+      rescue StandardError => e
+        ::Chef::Log.fatal("#{resource_header} could not find ID for preferred_collector: #{id}")
+        raise e
+      end
+    end
+    @preferred_collector
+  end
+
   def properties
     return @properties if @properties
 
     data = {
       'name' => new_resource.host,
       'displayName' => new_resource.display_name || new_resource.host,
-      'preferredCollectorId' => new_resource.preferred_collector,
+      'preferredCollectorId' => preferred_collector,
       'hostGroupIds' => new_resource.host_groups.join(',')
     }
 
