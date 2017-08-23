@@ -34,6 +34,7 @@ property :access_id, String, required: true, desired_state: false
 property :access_key, String, required: true, desired_state: false
 
 load_current_value do
+  client = Logicmonitor::Client.new(new_resource.account_name, new_resource.access_id, new_resource.access_key)
   lookup = client.get("/device/devices?filter=name:#{CGI.escape(new_resource.host)}")
   current_value_does_not_exist! unless lookup && lookup['data'] && lookup['data']['total'] > 0
   current = lookup['data']['items'][0]
@@ -63,10 +64,6 @@ action_class do
     )
   end
 
-  def resource_header
-    @resource_header ||= "logicmonitor-device-#{new_resource.host}"
-  end
-
   def host_groups
     return @host_groups if @host_groups
     ids = []
@@ -78,7 +75,7 @@ action_class do
           lookup = client.get("/device/groups?filter=fullPath~#{CGI.escape(host_group)}&fields=id")
           ids.concat(lookup['data']['items'].map { |i| i['id'] })
         rescue StandardError => e
-          ::Chef::Log.error("#{resource_header} could not find ID for host_group: #{host_group}")
+          ::Chef::Log.error("logicmonitor: could not find ID for host_group: #{host_group}")
           raise e
         end
       end
@@ -96,7 +93,7 @@ action_class do
         lookup = client.get("/setting/collectors?filter=hostname~#{CGI.escape(id)}&sort=+numberOfHosts&fields=id")
         id = lookup['data']['items'][0]['id']
       rescue StandardError => e
-        ::Chef::Log.error("#{resource_header} could not find ID for preferred_collector: #{id}")
+        ::Chef::Log.error("logicmonitor: could not find ID for preferred_collector: #{id}")
         raise e
       end
     end
