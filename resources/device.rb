@@ -51,7 +51,11 @@ end
 action :create do
   converge_by("creating logicmonitor device for #{new_resource.host}") do
     response = client.post('/device/devices', properties)
-    ::Chef::Log.info("logicmonitor: created device for #{new_resource.host} (#{response['errmsg']})")
+    if response['errmsg'] == 'OK'
+      ::Chef::Log.info("logicmonitor: created device for #{new_resource.host}")
+    else
+      raise "logicmonitor: failed to create device for #{new_resource.host} (#{response['errmsg']})"
+    end
   end
 end
 
@@ -107,7 +111,7 @@ action_class do
       'name' => new_resource.host,
       'displayName' => new_resource.display_name || new_resource.host,
       'preferredCollectorId' => preferred_collector,
-      'hostGroupIds' => new_resource.host_groups.join(',')
+      'hostGroupIds' => host_groups.join(',')
     }
 
     data['description'] = new_resource.description if new_resource.description
