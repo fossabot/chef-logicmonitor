@@ -38,7 +38,7 @@ load_current_value do |desired|
   lookup = client.get("/device/devices?filter=name:#{CGI.escape(desired.host)}")
   current_value_does_not_exist! unless lookup && lookup['data'] && lookup['data']['total'] > 0
   current = lookup['data']['items'][0]
-  field = lambda { |field| (current[field] && !current[field].empty? ? current[field] : nil) }
+  field = lambda { |field| (current[field] && !current[field].to_s.empty? ? current[field] : nil) }
   display_name field['displayName']
   description field['description']
   link field['link']
