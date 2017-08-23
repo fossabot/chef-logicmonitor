@@ -16,8 +16,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'json'
-
 provides :logicmonitor_device
 resource_name :logicmonitor_device
 
@@ -36,38 +34,44 @@ property :access_id, String, required: true
 property :access_key, String, required: true
 
 action :create do
-  path = '/device/devices'
-
-  data = {
-    'name' => new_resource.host,
-    'displayName' => new_resource.display_name || new_resource.host,
-    'preferredCollectorId' => new_resource.preferred_collector,
-    'hostGroupIds' => new_resource.host_groups.join(',')
-  }
-
-  data['description'] = new_resource.description if new_resource.description
-  data['link'] = new_resource.link if new_resource.link
-  data['disableAlerting'] = new_resource.disable_alerting if new_resource.disable_alerting
-  data['customProperties'] = new_resource.custom_properties if new_resource.custom_properties
-
-  if new_resource.enable_netflow
-    data['enableNetflow'] = new_resource.enable_netflow
-    data['netflowCollectorId'] = new_resource.netflow_collector
-  end
-
-  payload = data.to_json
-
-  http_request "logicmonitor-device-#{new_resource.host}" do
-    action :post
-    url "https://#{new_resource.account_name}.logicmonitor.com/santaba/rest#{path}"
-    message payload
-    headers ({
-      'Authorization' => signature(new_resource.access_id, new_resource.access_key, 'POST', path, payload),
-      'Content-Type' => 'application/json'
-    })
+  lookup = client.get('/device/devices?filter=name:grasp-linadm1')
+  if lookup && lookup['data']['total'] > 0
+    ::Chef::Log.info("logicmonitor-device-#{new_resource.host} already exists, skipping")
+  else
+    ::Chef::Log.info("logicmonitor-device-#{new_resource.host} does not exist, creating")
+    client.post('/device/devices', properties)
   end
 end
 
 action_class do
-  include Logicmonitor::Authorization
+  def client
+    @client ||= Logicmonitor::Client.new(
+      new_resource.account_name,
+      new_resource.access_id,
+      new_resource.access_key
+    )
+  end
+
+  def properties
+    return @properties if @properties
+
+    data = {
+      'name' => new_resource.host,
+      'displayName' => new_resource.display_name || new_resource.host,
+      'preferredCollectorId' => new_resource.preferred_collector,
+      'hostGroupIds' => new_resource.host_groups.join(',')
+    }
+
+    data['description'] = new_resource.description if new_resource.description
+    data['link'] = new_resource.link if new_resource.link
+    data['disableAlerting'] = new_resource.disable_alerting if new_resource.disable_alerting
+    data['customProperties'] = new_resource.custom_properties if new_resource.custom_properties
+
+    if new_resource.enable_netflow
+      data['enableNetflow'] = new_resource.enable_netflow
+      data['netflowCollectorId'] = new_resource.netflow_collector
+    end
+
+    @properties = data
+  end
 end
