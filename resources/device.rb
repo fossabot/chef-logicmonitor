@@ -63,7 +63,7 @@ action_class do
       @preferred_collector = id.to_i
     else
       begin
-        lookup = client.get("/setting/collectors?filter=hostname~#{id}&sort=+numberOfHosts")
+        lookup = client.get("/setting/collectors?filter=hostname~#{id}&sort=+numberOfHosts&fields=id")
         @preferred_collector = lookup['data']['items'][0]['id']
       rescue StandardError => e
         ::Chef::Log.fatal("#{resource_header} could not find ID for preferred_collector: #{id}")
