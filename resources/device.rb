@@ -34,7 +34,7 @@ property :access_id, String, required: true
 property :access_key, String, required: true
 
 action :create do
-  lookup = client.get('/device/devices?filter=name:grasp-linadm1')
+  lookup = client.get("/device/devices?filter=name:#{CGI.escape(new_resource.host)}")
   if lookup && lookup['data']['total'] > 0
     ::Chef::Log.info("#{resource_header} already exists, skipping")
   else
@@ -67,7 +67,7 @@ action_class do
           lookup = client.get("/device/groups?filter=fullPath~#{CGI.escape(host_group)}&fields=id")
           ids.concat(lookup['data']['items'].map { |i| i['id'] })
         rescue StandardError => e
-          ::Chef::Log.fatal("#{resource_header} could not find ID for host_group: #{host_group}")
+          ::Chef::Log.error("#{resource_header} could not find ID for host_group: #{host_group}")
           raise e
         end
       end
@@ -85,7 +85,7 @@ action_class do
         lookup = client.get("/setting/collectors?filter=hostname~#{CGI.escape(id)}&sort=+numberOfHosts&fields=id")
         @preferred_collector = lookup['data']['items'][0]['id']
       rescue StandardError => e
-        ::Chef::Log.fatal("#{resource_header} could not find ID for preferred_collector: #{id}")
+        ::Chef::Log.error("#{resource_header} could not find ID for preferred_collector: #{id}")
         raise e
       end
     end
