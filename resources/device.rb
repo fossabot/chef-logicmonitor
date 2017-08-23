@@ -34,14 +34,17 @@ property :access_id, String, required: true, desired_state: false
 property :access_key, String, required: true, desired_state: false
 
 load_current_value do
-  current_value_does_not_exist! unless get_field('name')
-  display_name get_field('displayName')
-  description get_field('description')
-  link get_field('link')
-  disable_alerting get_field('disableAlerting')
-  enable_netflow get_field('enableNetflow')
-  netflow_collector get_field('netflowCollectorId')
-  custom_properties get_field('customProperties')
+  lookup = client.get("/device/devices?filter=name:#{CGI.escape(new_resource.host)}")
+  current_value_does_not_exist! unless lookup && lookup['data'] && lookup['data']['total'] > 0
+  current = lookup['data']['items'][0]
+  field = lambda { |field| (current[field] && !current[field].empty? ? current[field] : nil) }
+  display_name field['displayName']
+  description field['description']
+  link field['link']
+  disable_alerting field['disableAlerting']
+  enable_netflow field['enableNetflow']
+  netflow_collector field['netflowCollectorId']
+  custom_properties field['customProperties']
 end
 
 action :create do
@@ -121,12 +124,5 @@ action_class do
     end
 
     @properties = data
-  end
-
-  def get_field(field)
-    @current ||= client.get("/device/devices?filter=name:#{CGI.escape(new_resource.host)}")['data']['items'][0]
-    (@current[field] && !@current[field].empty? ? @current[field] : nil)
-  rescue
-    nil
   end
 end
