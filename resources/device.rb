@@ -82,7 +82,7 @@ action_class do
       id = id.to_i
     else
       begin
-        lookup = client.get("/setting/collectors?filter=hostname~#{CGI.escape(id)}&sort=+numberOfHosts&fields=id")
+        lookup = client.get("/setting/collectors?filter=hostname~#{CGI.escape(id)}&sort=+numberOfHosts&fields=id,numberOfHosts")
         id = lookup['data']['items'][0]['id']
       rescue StandardError => e
         ::Chef::Log.error("logicmonitor: could not find ID for preferred_collector: #{id}")

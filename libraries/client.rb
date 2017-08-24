@@ -45,11 +45,20 @@ module Logicmonitor
       perform(request)
     end
 
-    def post(path, data)
-      request = Net::HTTP::Post.new(URI(File.join(@uri.to_s, path)).request_uri)
+    def post(path, data, method = 'POST')
+      request_class = Object.const_get("Net::HTTP::#{method.capitalize}")
+      request = request_class.new(URI(File.join(@uri.to_s, path)).request_uri)
       request.body = (data.is_a?(String) ? data : data.to_json)
-      request['Authorization'] = signature('POST', path, request.body)
+      request['Authorization'] = signature(method, path, request.body)
       perform(request)
+    end
+
+    def put(path, data)
+      post(path, data, 'PUT')
+    end
+
+    def patch(path, data)
+      post(path, data, 'PATCH')
     end
 
     def perform(request)
