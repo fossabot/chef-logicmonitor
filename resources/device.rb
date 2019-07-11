@@ -64,7 +64,7 @@ action_class do
         ids << host_group
       else
         begin
-          lookup = client.get("/device/groups?filter=fullPath~#{CGI.escape(host_group)}&fields=id")
+          lookup = client.get("/device/groups?filter=name:#{CGI.escape(host_group)}&fields=id")
           ids.concat(lookup['data']['items'].map { |i| i['id'] })
         rescue StandardError => e
           ::Chef::Log.error("logicmonitor: could not find ID for host_group: #{host_group}")
