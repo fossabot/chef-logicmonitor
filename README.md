@@ -1,4 +1,6 @@
 # logicmonitor
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FGranicus%2Fchef-logicmonitor.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2FGranicus%2Fchef-logicmonitor?ref=badge_shield)
+
 
 LWRP cookbook for configuring Logicmonitor devices.
 
@@ -39,3 +41,7 @@ logicmonitor_device '10.36.11.240' do
   access_key node['api']['access_key']
 end
 ```
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FGranicus%2Fchef-logicmonitor.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2FGranicus%2Fchef-logicmonitor?ref=badge_large)
